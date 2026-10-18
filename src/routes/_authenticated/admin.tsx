@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { Tables } from "@/integrations/supabase/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -98,7 +99,7 @@ function Orders() {
 
   async function update(id: string, patch: Partial<Pick<Order, "status" | "payment_status">>) {
     const { error } = await supabase.from("orders").update(patch).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     q.refetch();
   }
 
@@ -165,7 +166,7 @@ function Products() {
   const { data } = useQuery(productsQuery);
   async function save(p: Product, patch: Partial<Product>) {
     const { error } = await supabase.from("products").update(patch).eq("id", p.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["products"] });
   }
@@ -203,7 +204,7 @@ function Products() {
 function Settings() {
   const qc = useQueryClient();
   const { data } = useQuery(settingsQuery);
-  const [form, setForm] = useState<Record<string, string | number | boolean> | null>(null);
+  const [form, setForm] = useState<Tables<"settings"> | null>(null);
   useEffect(() => { if (data && !form) setForm({ ...data }); }, [data]);
   if (!form) return <p>Loading…</p>;
   async function save(e: React.FormEvent) {
@@ -217,12 +218,12 @@ function Settings() {
       instagram: String(form!.instagram).slice(0, 100),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Settings saved");
     qc.invalidateQueries({ queryKey: ["settings"] });
   }
   const f = "w-full rounded-xl border bg-card px-4 py-2.5";
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
+  const set = (k: keyof Tables<"settings">) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value } as Tables<"settings">);
   return (
     <form onSubmit={save} className="max-w-lg space-y-4">
       <h1 className="text-3xl font-bold">Settings</h1>

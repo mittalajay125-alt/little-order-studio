@@ -37,7 +37,7 @@ function Menu() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-4xl font-bold">Our Menu</h1>
         <div className="sticky top-14 z-30 -mx-4 mt-6 flex gap-2 overflow-x-auto bg-background/95 px-4 py-3 backdrop-blur">
-          {[["all", "All"], ...groups.map(([c]) => [c, c])].map(([k, l]) => (
+          {([["all", "All"], ...groups.map(([c]) => [c, c])] as [string, string][]).map(([k, l]) => (
             <button key={k} onClick={() => setActive(k)}
               className={`whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition ${active === k ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}>
               {l}

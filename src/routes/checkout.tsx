@@ -47,8 +47,8 @@ function Checkout() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = schema.safeParse({ name, phone: phone.replace(/[\s-]/g, ""), address, notes });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
-    if (fulfillment === "delivery" && address.trim().length < 10) return toast.error("Please enter your full delivery address");
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Check your details"); return; }
+    if (fulfillment === "delivery" && address.trim().length < 10) { toast.error("Please enter your full delivery address"); return; }
     setBusy(true);
     const { data, error } = await supabase.rpc("place_order", {
       _name: parsed.data.name,
@@ -60,7 +60,7 @@ function Checkout() {
       _items: cart.items.map((i) => ({ product_id: i.productId, size: i.size, quantity: i.quantity, toppings: i.toppings.map((t) => t.id) })),
     });
     setBusy(false);
-    if (error) return toast.error(error.message || "Could not place order");
+    if (error) { toast.error(error.message || "Could not place order"); return; }
     cart.clear();
     navigate({ to: "/order/$number", params: { number: data as string } });
   }
