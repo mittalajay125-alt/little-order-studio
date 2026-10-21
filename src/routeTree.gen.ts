@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CustomerLoginRouteImport } from './routes/customer-login'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as OrderNumberRouteImport } from './routes/order.$number'
@@ -36,6 +37,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomerLoginRoute = CustomerLoginRouteImport.update({
+  id: '/customer-login',
+  path: '/customer-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
@@ -74,21 +82,37 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/checkout' | '/menu' | '/admin' | '/order/$number'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/customer-login'
+    | '/menu'
+    | '/admin'
+    | '/order/$number'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/checkout' | '/menu' | '/admin' | '/order/$number'
+  to:
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/customer-login'
+    | '/menu'
+    | '/admin'
+    | '/order/$number'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/checkout'
+    | '/customer-login'
     | '/menu'
     | '/_authenticated/admin'
     | '/order/$number'
@@ -99,6 +123,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
+  CustomerLoginRoute: typeof CustomerLoginRoute
   MenuRoute: typeof MenuRoute
   OrderNumberRoute: typeof OrderNumberRoute
 }
@@ -131,6 +156,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout'
       fullPath: '/checkout'
       preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer-login': {
+      id: '/customer-login'
+      path: '/customer-login'
+      fullPath: '/customer-login'
+      preLoaderRoute: typeof CustomerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -173,6 +205,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
+  CustomerLoginRoute: CustomerLoginRoute,
   MenuRoute: MenuRoute,
   OrderNumberRoute: OrderNumberRoute,
 }
