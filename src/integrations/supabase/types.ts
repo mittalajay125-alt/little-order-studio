@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_addresses: {
+        Row: {
+          area: string
+          city: string
+          created_at: string
+          full_name: string
+          house: string
+          id: string
+          label: string
+          landmark: string
+          latitude: number | null
+          longitude: number | null
+          phone: string
+          pin: string
+          state: string
+          street: string
+          user_id: string
+        }
+        Insert: {
+          area: string
+          city: string
+          created_at?: string
+          full_name: string
+          house: string
+          id?: string
+          label: string
+          landmark?: string
+          latitude?: number | null
+          longitude?: number | null
+          phone: string
+          pin: string
+          state: string
+          street: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          city?: string
+          created_at?: string
+          full_name?: string
+          house?: string
+          id?: string
+          label?: string
+          landmark?: string
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string
+          pin?: string
+          state?: string
+          street?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -60,7 +114,9 @@ export type Database = {
       }
       orders: {
         Row: {
+          address_snapshot: Json | null
           created_at: string
+          customer_id: string | null
           customer_name: string
           customer_phone: string
           delivery_address: string | null
@@ -76,7 +132,9 @@ export type Database = {
           total: number
         }
         Insert: {
+          address_snapshot?: Json | null
           created_at?: string
+          customer_id?: string | null
           customer_name: string
           customer_phone: string
           delivery_address?: string | null
@@ -92,7 +150,9 @@ export type Database = {
           total: number
         }
         Update: {
+          address_snapshot?: Json | null
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           customer_phone?: string
           delivery_address?: string | null
@@ -147,6 +207,35 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      profiles: {
+        Row: {
+          default_address_id: string | null
+          full_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          default_address_id?: string | null
+          full_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          default_address_id?: string | null
+          full_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_default_address_owner"
+            columns: ["user_id", "default_address_id"]
+            isOneToOne: false
+            referencedRelation: "customer_addresses"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
       }
       settings: {
         Row: {
@@ -210,6 +299,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      place_customer_order: {
+        Args: {
+          _address_id: string
+          _fulfillment: string
+          _items: Json
+          _name: string
+          _notes: string
+          _payment: string
+          _phone: string
+        }
+        Returns: string
       }
       place_order: {
         Args: {
