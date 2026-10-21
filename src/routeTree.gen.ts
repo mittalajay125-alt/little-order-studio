@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CustomerLoginRouteImport } from './routes/customer-login'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as OrderNumberRouteImport } from './routes/order.$number'
 
@@ -47,6 +48,11 @@ const MenuRoute = MenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/customer-login'
     | '/menu'
+    | '/account'
     | '/admin'
     | '/order/$number'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/customer-login'
     | '/menu'
+    | '/account'
     | '/admin'
     | '/order/$number'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/customer-login'
     | '/menu'
+    | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/order/$number'
   fileRoutesById: FileRoutesById
@@ -172,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -190,10 +209,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
 }
 
