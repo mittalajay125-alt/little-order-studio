@@ -11,7 +11,7 @@ const fields: { key: keyof Pick<AddressInput, "label" | "full_name" | "phone" | 
   { key: "city", label: "City", max: 80 }, { key: "state", label: "State", max: 80 },
   { key: "pin", label: "PIN code", max: 6 }, { key: "landmark", label: "Landmark (optional)", max: 150 },
 ];
-export function AddressEditor({ userId, initial, name, onSaved, onCancel }: { userId: string; initial?: SavedAddress; name?: string; onSaved: (address: SavedAddress) => void; onCancel: () => void }) {
+export function AddressEditor({ userId, initial, name, onSaved, onCancel }: { userId: string; initial?: SavedAddress | undefined; name?: string | undefined; onSaved: (address: SavedAddress) => void; onCancel: () => void }) {
   const [form, setForm] = useState<AddressInput>(initial ?? { ...emptyAddress, full_name: name ?? "" });
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ export function AddressEditor({ userId, initial, name, onSaved, onCancel }: { us
         const data = await response.json() as { address?: Record<string, string> };
         const a = data.address;
         if (!a) throw new Error("No address found");
-        setForm(previous => ({ ...previous, house: a.house_number ?? previous.house, street: a.road ?? previous.street, area: a.suburb ?? a.neighbourhood ?? a.village ?? previous.area, city: a.city ?? a.town ?? a.county ?? previous.city, state: a.state ?? previous.state, pin: a.postcode ?? previous.pin }));
+        setForm(previous => ({ ...previous, house: a["house_number"] ?? previous.house, street: a["road"] ?? previous.street, area: a["suburb"] ?? a["neighbourhood"] ?? a["village"] ?? previous.area, city: a["city"] ?? a["town"] ?? a["county"] ?? previous.city, state: a["state"] ?? previous.state, pin: a["postcode"] ?? previous.pin }));
         setLocationMessage("Address detected. Review the details and confirm before saving.");
       } catch { setLocationMessage("Location detected, but address lookup failed. Enter the address details manually."); }
       finally { setLocating(false); }
