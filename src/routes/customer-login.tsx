@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { OTP_COOLDOWN_SECONDS, safeReturnPath, validOtp } from "@/lib/customer";
 
 export const Route = createFileRoute("/customer-login")({
-  validateSearch: (search: Record<string, unknown>) => ({ returnTo: safeReturnPath(search.returnTo) }),
+  validateSearch: (search: Record<string, unknown>) => ({ returnTo: search["returnTo"] === "/checkout" ? "/checkout" as const : undefined }),
   head: () => ({ meta: [
     { title: "Customer login — Chocolate-n-More" },
     { name: "description", content: "Sign in to your Chocolate-n-More account with an email code." },
@@ -54,7 +54,7 @@ function CustomerLogin() {
     try {
       const { data, error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code, type: "email" });
       if (error || !data.session) { setError(error?.message ?? "This code could not be verified."); return; }
-      await navigate({ to: returnTo });
+      await navigate({ to: safeReturnPath(returnTo) });
     } catch { setError("Could not verify your code. Please try again."); }
     finally { setBusy(false); }
   }

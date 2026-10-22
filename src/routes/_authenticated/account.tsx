@@ -48,7 +48,7 @@ function Account() {
     await qc.cancelQueries(); qc.clear();
     const { error } = await supabase.auth.signOut();
     if (error) { toast.error(error.message); return; }
-    await navigate({ to: "/customer-login", replace: true });
+    await navigate({ to: "/customer-login", search: { returnTo: undefined }, replace: true });
   }
   return <div className="min-h-screen"><SiteHeader /><main className="mx-auto max-w-4xl space-y-10 px-4 py-10">
     <div className="flex items-center justify-between gap-4"><h1 className="text-3xl">My Account</h1><Button variant="outline" onClick={logout}><LogOut />Logout</Button></div>
