@@ -52,7 +52,7 @@ function AuthPage() {
       toast.success("Check your email to confirm your account, then sign in.");
       setMode("in");
     } else if (mode === "forgot") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth` });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
       toast.success("Password reset link sent — check your email, then set a new password.");
