@@ -1,8 +1,11 @@
 # Customer account upgrade
-- [ ] Finish and verify admin password recovery.
-- [ ] Inspect current authentication, ordering, and deployment setup.
-- [ ] Add email OTP customer login and persistent account access.
-- [ ] Add secure customer profiles, saved addresses, and order ownership.
-- [ ] Integrate confirmed addresses and sign-in with checkout without losing cart.
-- [ ] Test account, address, checkout, location, and data isolation flows.
-- [ ] Report completed features, configuration blockers, and test results.
+- [x] Add admin password recovery; reset request accepted and missing-link rejection tested.
+- [x] Inspect current authentication, ordering, and deployment setup.
+- [x] Add email OTP customer login controls and persistent account access.
+- [x] Add secure customer profiles, saved addresses, and order ownership.
+- [x] Integrate confirmed addresses and sign-in with checkout without losing cart.
+- [x] Test signed-in address CRUD, checkout, immutable order addresses, admin cancellation, logout, mobile layout, and controlled location outcomes; eight automated tests pass.
+- [ ] Configure six-digit authentication email delivery and branding: waiting on sender-domain setup and hosted one-time-code settings; no custom paid service enabled.
+- [ ] Verify real email signup/login and complete password reset: waiting on access to an emailed code/reset link; the reset request was accepted but receipt and password update are unverified.
+- [ ] Verify two-customer isolation end-to-end: waiting on a second confirmed customer test account; owner-scoped policies reviewed, but tests used the owner's admin account.
+- [x] Report completed features, configuration blockers, and test results.
