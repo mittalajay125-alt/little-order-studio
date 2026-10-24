@@ -15,6 +15,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
       { name: "description", content: "Manage orders, products and delivery settings." },
       { property: "og:title", content: "Admin — Chocolate-n-More" },
       { property: "og:description", content: "Staff dashboard." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

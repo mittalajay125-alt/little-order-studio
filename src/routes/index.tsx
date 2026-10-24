@@ -11,6 +11,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Order fudgy brownie bowls, fruit punch brownies, fruit cups and truffle balls. Stall pickup or home delivery." },
       { property: "og:title", content: "Chocolate-n-More — Order Brownies Online" },
       { property: "og:description", content: "Fudgy brownie bowls, fruit cups and truffles. Pickup or delivery, pay by cash or UPI." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Home,

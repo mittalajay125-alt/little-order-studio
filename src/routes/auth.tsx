@@ -10,6 +10,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Staff sign-in for Chocolate-n-More." },
       { property: "og:title", content: "Admin login — Chocolate-n-More" },
       { property: "og:description", content: "Staff sign-in." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -46,7 +48,7 @@ function AuthPage() {
       if (error) { toast.error(error.message); return; }
       navigate({ to: "/admin" });
     } else if (mode === "up") {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/admin` } });
+      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth` } });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
       toast.success("Check your email to confirm your account, then sign in.");

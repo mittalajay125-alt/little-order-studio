@@ -21,6 +21,8 @@ export const Route = createFileRoute("/checkout")({
       { name: "description", content: "Review your dessert order and choose pickup or home delivery." },
       { property: "og:title", content: "Checkout — Chocolate-n-More" },
       { property: "og:description", content: "Place your order. Pay by cash or UPI at pickup or delivery." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Checkout,

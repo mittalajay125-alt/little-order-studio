@@ -10,6 +10,8 @@ export const Route = createFileRoute("/order/$number")({
       { name: "description", content: "Your Chocolate-n-More order has been received." },
       { property: "og:title", content: "Order confirmed — Chocolate-n-More" },
       { property: "og:description", content: "Thanks for ordering from Chocolate-n-More." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
