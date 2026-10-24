@@ -1,5 +1,5 @@
 # Customer account upgrade
-- [ ] Resolve verification-link return to checkout; six-digit email template remains blocked by sender-domain setup.
+- [x] Resolve verification-link return to checkout; validated signed-in session reaches checkout with cart intact and expired-link errors display. Six-digit email template still awaits sender-domain setup.
 - [x] Add admin password recovery; reset request accepted and missing-link rejection tested.
 - [x] Inspect current authentication, ordering, and deployment setup.
 - [x] Add email OTP customer login controls and persistent account access.
