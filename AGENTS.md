@@ -14,3 +14,4 @@
 - Customer checkout calls `place_customer_order`, which delegates price calculation and order insertion to `place_order`; authenticated ownership and immutable address snapshots are derived in SQL, not from browser identity or totals.
 - Customer query keys include user IDs and reads explicitly filter ownership; RLS remains authoritative and sign-out clears query caches to prevent cross-account data reuse.
 - Location lookup uses browser geolocation only from the address action and a no-key OpenStreetMap reverse lookup with editable manual fallback; never send account credentials to the geocoding origin.
+- Customer email callbacks preserve only allowlisted account/checkout destinations and revalidate the session with Auth before navigating; never treat an email-link click alone as authentication.

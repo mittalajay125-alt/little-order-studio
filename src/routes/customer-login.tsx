@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
 import { OTP_COOLDOWN_SECONDS, safeReturnPath, validOtp } from "@/lib/customer";
+import { useCustomerSession } from "@/lib/customer-session";
 
 export const Route = createFileRoute("/customer-login")({
   validateSearch: (search: Record<string, unknown>) => ({ returnTo: search["returnTo"] === "/checkout" ? "/checkout" as const : undefined }),
@@ -19,12 +20,29 @@ export const Route = createFileRoute("/customer-login")({
 function CustomerLogin() {
   const navigate = useNavigate();
   const { returnTo } = Route.useSearch();
+  const { user, loading } = useCustomerSession();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const search = new URLSearchParams(window.location.search);
+    if (params.get("error") || search.get("error")) setError("This email link has already been used or has expired. Request a new email and open only the newest link once.");
+  }, []);
+  useEffect(() => {
+    if (loading || !user) return;
+    let active = true;
+    void supabase.auth.getUser().then(({ data, error }) => {
+      if (!active || error || !data.user) return;
+      const destination = safeReturnPath(returnTo ?? sessionStorage.getItem("customer-login-return"));
+      sessionStorage.removeItem("customer-login-return");
+      void navigate({ to: destination, replace: true });
+    });
+    return () => { active = false; };
+  }, [loading, user, returnTo, navigate]);
   useEffect(() => {
     const end = Number(sessionStorage.getItem("customer-otp-cooldown") ?? 0);
     const tick = () => setCooldown(Math.max(0, Math.ceil((end - Date.now()) / 1000)));
@@ -39,7 +57,11 @@ function CustomerLogin() {
     if (busy || cooldown > 0) return;
     setBusy(true); setError("");
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/customer-login` } });
+      const destination = safeReturnPath(returnTo);
+      sessionStorage.setItem("customer-login-return", destination);
+      const callback = new URL("/customer-login", window.location.origin);
+      if (destination === "/checkout") callback.searchParams.set("returnTo", "/checkout");
+      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: callback.href } });
       if (error) { setError(error.message); return; }
       sessionStorage.setItem("customer-otp-cooldown", String(Date.now() + OTP_COOLDOWN_SECONDS * 1000));
       setCooldown(OTP_COOLDOWN_SECONDS); setSent(true);

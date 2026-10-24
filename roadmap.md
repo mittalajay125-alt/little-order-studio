@@ -1,4 +1,5 @@
 # Customer account upgrade
+- [ ] Resolve verification-link return to checkout; six-digit email template remains blocked by sender-domain setup.
 - [x] Add admin password recovery; reset request accepted and missing-link rejection tested.
 - [x] Inspect current authentication, ordering, and deployment setup.
 - [x] Add email OTP customer login controls and persistent account access.
