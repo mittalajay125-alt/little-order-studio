@@ -22,6 +22,10 @@ function ResetPassword() {
     const recovery = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
     if (recovery) sessionStorage.setItem("cnm-password-recovery", "true");
     supabase.auth.getUser().then(({ data }) => setReady(!!data.user && sessionStorage.getItem("cnm-password-recovery") === "true"));
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") { sessionStorage.setItem("cnm-password-recovery", "true"); setReady(!!session?.user); }
+    });
+    return () => data.subscription.unsubscribe();
   }, []);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");

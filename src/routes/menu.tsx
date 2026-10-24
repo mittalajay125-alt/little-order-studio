@@ -14,6 +14,8 @@ export const Route = createFileRoute("/menu")({
       { name: "description", content: "Brownie bowls, fruit punch brownies, truffle balls, fruit cups and toppings with prices." },
       { property: "og:title", content: "Chocolate-n-More Menu" },
       { property: "og:description", content: "Pick your brownie, size and toppings and order online." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
