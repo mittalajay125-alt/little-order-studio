@@ -1,0 +1,46 @@
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({ navigate: vi.fn(), send: vi.fn(), getUser: vi.fn(), session: { user: null as null | { id: string }, loading: false } }));
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (options: object) => ({ ...options, useSearch: () => ({ returnTo: "/checkout" }) }),
+  useNavigate: () => mocks.navigate,
+  Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { signInWithOtp: mocks.send, getUser: mocks.getUser } } }));
+vi.mock("@/lib/customer-session", () => ({ useCustomerSession: () => mocks.session }));
+vi.mock("@/components/SiteHeader", () => ({ SiteHeader: () => null }));
+import { Route } from "@/routes/customer-login";
+
+describe("Customer email-link authentication", () => {
+  beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); mocks.session.user = null; window.history.replaceState({}, "", "/customer-login"); });
+  afterEach(cleanup);
+  const open = () => render(<Route.component />);
+  it("requests account creation and a same-origin checkout callback", async () => {
+    mocks.send.mockResolvedValue({ error: null }); open();
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send sign-in link" }));
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledWith({ email: "customer@example.com", options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/customer-login?returnTo=%2Fcheckout` } }));
+    expect(sessionStorage.getItem("customer-login-return")).toBe("/checkout");
+  });
+  it("does not record success or a cooldown after an Auth refusal", async () => {
+    mocks.send.mockResolvedValue({ error: { message: "Email rate limit exceeded" } }); open();
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send sign-in link" }));
+    await screen.findByRole("alert");
+    expect(sessionStorage.getItem("customer-otp-cooldown")).toBeNull();
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+  it("returns to checkout only after Auth revalidates the session", async () => {
+    mocks.session.user = { id: "customer" };
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "customer" } }, error: null }); open();
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: "/checkout", replace: true }));
+    expect(mocks.getUser).toHaveBeenCalled();
+  });
+  it("does not navigate if Auth rejects the apparent session", async () => {
+    mocks.session.user = { id: "customer" };
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: { message: "Session expired" } }); open();
+    await screen.findByRole("alert");
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+});
