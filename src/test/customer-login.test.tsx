@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ navigate: vi.fn(), send: vi.fn(), getUser: vi.fn(), session: { user: null as null | { id: string }, loading: false } }));
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (options: object) => ({ ...options, useSearch: () => ({ returnTo: "/checkout" }) }),
+  createFileRoute: () => (options: object) => ({ options, useSearch: () => ({ returnTo: "/checkout" }) }),
   useNavigate: () => mocks.navigate,
   Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
@@ -15,7 +15,11 @@ import { Route } from "@/routes/customer-login";
 describe("Customer email-link authentication", () => {
   beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); mocks.session.user = null; window.history.replaceState({}, "", "/customer-login"); });
   afterEach(cleanup);
-  const open = () => render(<Route.component />);
+  const open = () => {
+    const Component = Route.options.component;
+    if (!Component) throw new Error("Customer login component is missing");
+    return render(<Component />);
+  };
   it("requests account creation and a same-origin checkout callback", async () => {
     mocks.send.mockResolvedValue({ error: null }); open();
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
