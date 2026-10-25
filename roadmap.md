@@ -1,5 +1,5 @@
 # Customer account upgrade
-- [ ] Diagnose the uploaded email-login issue; use the customer's requested email-link fallback, preserve checkout, and verify error handling and session return.
+- [x] Diagnose email-login mismatch and use requested link-only fallback; 12 tests pass, browser checks confirm the form and expired-link error, and build is OK. Real mailbox link consumption remains unverified.
 - [x] Resolve verification-link return to checkout; validated signed-in session reaches checkout with cart intact and expired-link errors display. Six-digit email template still awaits sender-domain setup.
 - [x] Add admin password recovery; reset request accepted and missing-link rejection tested.
 - [x] Inspect current authentication, ordering, and deployment setup.
@@ -7,7 +7,7 @@
 - [x] Add secure customer profiles, saved addresses, and order ownership.
 - [x] Integrate confirmed addresses and sign-in with checkout without losing cart.
 - [x] Test signed-in address CRUD, checkout, immutable order addresses, admin cancellation, logout, mobile layout, and controlled location outcomes; eight automated tests pass.
-- [ ] Configure six-digit authentication email delivery and branding: waiting on sender-domain setup and hosted one-time-code settings; no custom paid service enabled.
+- [ ] Optional branded/six-digit emails: requires owned sender-domain setup if requested later; current login uses default email links and no paid service was enabled.
 - [ ] Verify real email signup/login and complete password reset: waiting on access to an emailed code/reset link; the reset request was accepted but receipt and password update are unverified.
 - [ ] Verify two-customer isolation end-to-end: waiting on a second confirmed customer test account; owner-scoped policies reviewed, but tests used the owner's admin account.
 - [x] Report completed features, configuration blockers, and test results.
