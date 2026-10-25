@@ -8,13 +8,13 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
+import type { AuthChangeEvent } from "@supabase/supabase-js";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/lib/cart";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { CustomerSessionProvider } from "@/lib/customer-session";
 
 function NotFoundComponent() {
@@ -91,19 +91,17 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") sessionStorage.setItem("cnm-password-recovery", "true");
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-    });
-    return () => data.subscription.unsubscribe();
+  const onIdentityChange = useCallback((event: AuthChangeEvent) => {
+    // The public email callback verifies Auth and owns navigation. Invalidating
+    // it during that transition restarts verification and account loading.
+    if (event === "SIGNED_IN" && router.state.location.pathname === "/customer-login") return;
+    void router.invalidate();
+    if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
   }, [router, queryClient]);
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        <CustomerSessionProvider>
+        <CustomerSessionProvider onIdentityChange={onIdentityChange}>
         <Outlet />
         <Toaster position="top-center" />
         </CustomerSessionProvider>
