@@ -1,4 +1,5 @@
 # Customer account upgrade
+- [ ] Diagnose the uploaded email-login issue; use the customer's requested email-link fallback, preserve checkout, and verify error handling and session return.
 - [x] Resolve verification-link return to checkout; validated signed-in session reaches checkout with cart intact and expired-link errors display. Six-digit email template still awaits sender-domain setup.
 - [x] Add admin password recovery; reset request accepted and missing-link rejection tested.
 - [x] Inspect current authentication, ordering, and deployment setup.
