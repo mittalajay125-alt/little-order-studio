@@ -13,7 +13,7 @@ vi.mock("@/components/SiteHeader", () => ({ SiteHeader: () => null }));
 import { Route } from "@/routes/customer-login";
 
 describe("Customer email-link authentication", () => {
-  beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); mocks.session.user = null; window.history.replaceState({}, "", "/customer-login"); });
+  beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); mocks.session.user = null; mocks.session.loading = false; window.history.replaceState({}, "", "/customer-login"); });
   afterEach(cleanup);
   const open = () => {
     const Component = Route.options.component;
@@ -44,6 +44,26 @@ describe("Customer email-link authentication", () => {
   it("does not navigate if Auth rejects the apparent session", async () => {
     mocks.session.user = { id: "customer" };
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: { message: "Session expired" } }); open();
+    await screen.findByRole("alert");
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+  it("does not sign in the original browser just because its email was sent", async () => {
+    mocks.send.mockResolvedValue({ error: null }); open();
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send sign-in link" }));
+    await waitFor(() => expect(sessionStorage.getItem("customer-otp-cooldown")).not.toBeNull());
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(mocks.getUser).not.toHaveBeenCalled();
+  });
+  it("verifies a callback once without an artificial navigation timer", async () => {
+    mocks.session.user = { id: "customer" };
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "customer" } }, error: null }); open();
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledTimes(1));
+    expect(mocks.getUser).toHaveBeenCalledTimes(1);
+  });
+  it("handles a failed verification connection without navigating", async () => {
+    mocks.session.user = { id: "customer" };
+    mocks.getUser.mockRejectedValue(new Error("Network unavailable")); open();
     await screen.findByRole("alert");
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
