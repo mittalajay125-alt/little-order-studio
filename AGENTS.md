@@ -15,3 +15,5 @@
 - Customer query keys include user IDs and reads explicitly filter ownership; RLS remains authoritative and sign-out clears query caches to prevent cross-account data reuse.
 - Location lookup uses browser geolocation only from the address action and a no-key OpenStreetMap reverse lookup with editable manual fallback; never send account credentials to the geocoding origin.
 - Customer email callbacks preserve only allowlisted account/checkout destinations and revalidate the session with Auth before navigating; never treat an email-link click alone as authentication.
+- CustomerSessionProvider owns the shared auth listener and defers identity invalidation outside the auth callback; the customer email callback owns its sign-in transition to avoid restarting verification. Keep the managed protected-route gate intact.
+- Customer queries briefly reuse owner-keyed data and create missing profiles with insert-only conflict handling; repeat login must not overwrite saved profile fields.
