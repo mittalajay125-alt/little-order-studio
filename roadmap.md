@@ -1,8 +1,8 @@
 # Customer account upgrade
-- [ ] Replace link-only login with six-digit OTP verification, resend, and checkout return; real email code delivery requires template configuration and mailbox verification.
-- [ ] Save customer phone in existing profiles and test ownership-safe profile saving without overwriting name/email.
-- [ ] Fix cart restoration across full email callbacks and refresh, discovered during sign-in testing.
-- [ ] Diagnose cross-device link expectations and slow sign-in; streamline session handling and test desktop/mobile without sharing sessions.
+- [x] Implement six-digit OTP verification, resend cooldown, error handling, and checkout return; automated tests pass. Actual email delivery remains blocked below.
+- [x] Save customer phone in existing profiles; desktop/mobile UI save and refresh passed, original values restored, existing email/name preserved.
+- [x] Fix cart restoration across full callbacks and refresh; automated and desktop/mobile checks confirm preservation.
+- [x] Diagnose separate-device sessions and redundant identity invalidation/listeners; streamline sign-in, existing-session account return measured about 2–3 seconds. Original 30–40-second real mailbox delay not reproduced.
 - [x] Diagnose email-login mismatch and use requested link-only fallback; 12 tests pass, browser checks confirm the form and expired-link error, and build is OK. Real mailbox link consumption remains unverified.
 - [x] Resolve verification-link return to checkout; validated signed-in session reaches checkout with cart intact and expired-link errors display. Six-digit email template still awaits sender-domain setup.
 - [x] Add admin password recovery; reset request accepted and missing-link rejection tested.
@@ -11,7 +11,7 @@
 - [x] Add secure customer profiles, saved addresses, and order ownership.
 - [x] Integrate confirmed addresses and sign-in with checkout without losing cart.
 - [x] Test signed-in address CRUD, checkout, immutable order addresses, admin cancellation, logout, mobile layout, and controlled location outcomes; eight automated tests pass.
-- [ ] Optional branded/six-digit emails: requires owned sender-domain setup if requested later; current login uses default email links and no paid service was enabled.
+- [ ] Configure code-only signup/magic-link email templates and hosted six-digit OTP length: requires owned sender-domain setup and hosted settings; no paid service enabled, current default emails still contain links.
 - [ ] Verify real email signup/login and complete password reset: waiting on access to an emailed code/reset link; the reset request was accepted but receipt and password update are unverified.
 - [ ] Verify two-customer isolation end-to-end: waiting on a second confirmed customer test account; owner-scoped policies reviewed, but tests used the owner's admin account.
 - [x] Report completed features, configuration blockers, and test results.
