@@ -51,7 +51,8 @@ function CustomerLogin() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.slice(1));
     const search = new URLSearchParams(window.location.search);
-    if (params.get("error") || search.get("error")) setError("Your sign-in has expired. Request a new code.");
+    if (search.get("link") === "blocked") setError("That email contained a sign-in link, which this shop doesn't accept. Please enter the 6-digit code on the device where you requested it. If your email has no code, the shop's login email still needs updating.");
+    else if (params.get("error") || search.get("error")) setError("That email link has expired or is not accepted. Request a new 6-digit code.");
     const pendingEmail = sessionStorage.getItem("customer-otp-email");
     if (pendingEmail) { setEmail(pendingEmail); setSent(true); }
   }, []);
@@ -81,12 +82,9 @@ function CustomerLogin() {
     if (busy || cooldown > 0) return;
     setBusy(true); setError("");
     try {
-      const destination = safeReturnPath(returnTo);
-      sessionStorage.setItem("customer-login-return", destination);
-      const callback = new URL("/customer-login", window.location.origin);
-      if (destination === "/checkout") callback.searchParams.set("returnTo", "/checkout");
-      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: callback.href } });
-      if (error) { setError(error.message); return; }
+      sessionStorage.setItem("customer-login-return", safeReturnPath(returnTo));
+      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } });
+      if (error) { setError(otpErrorMessage(error.message)); return; }
       sessionStorage.setItem("customer-otp-cooldown", String(Date.now() + OTP_COOLDOWN_SECONDS * 1000));
       sessionStorage.setItem("customer-otp-email", email.trim());
       setCooldown(OTP_COOLDOWN_SECONDS); setSent(true);
@@ -102,7 +100,7 @@ function CustomerLogin() {
     try {
       const result = await supabase.auth.verifyOtp({ email: email.trim(), token: code, type: "email" });
       if (result.error || !result.data.user || !result.data.session) {
-        setError(result.error?.message ?? "Invalid or expired code. Request a new code."); return;
+        setError(otpErrorMessage(result.error?.message ?? "Invalid or expired code.")); return;
       }
       verifiedUser.current = result.data.user.id;
       await finishSignIn();
