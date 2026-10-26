@@ -25,3 +25,15 @@ export function safeReturnPath(value: unknown) {
 }
 export const OTP_COOLDOWN_SECONDS = 60;
 export function validOtp(value: string) { return /^[0-9]{6}$/.test(value); }
+/** Customer sign-in is code-only: a session arriving from an emailed sign-in/sign-up link is rejected. Password recovery links stay allowed. */
+export function isBlockedEmailLink(hash: string) {
+  const params = new URLSearchParams(hash.replace(/^#/, ""));
+  const type = params.get("type");
+  return !!params.get("access_token") && (type === "magiclink" || type === "signup");
+}
+export function otpErrorMessage(message: string | undefined) {
+  const text = (message ?? "").toLowerCase();
+  if (text.includes("expired") || text.includes("invalid")) return "That code is invalid or has expired. Request a new code and enter the latest 6-digit code from your email.";
+  if (text.includes("rate limit") || text.includes("security purposes")) return "Too many attempts. Please wait a minute before requesting another code.";
+  return message || "We could not verify your code. Please try again.";
+}
