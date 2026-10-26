@@ -28,15 +28,17 @@ const KEY = "cnm-cart-v1";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [restored, setRestored] = useState(false);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) setItems(JSON.parse(raw));
     } catch {}
+    setRestored(true);
   }, []);
   useEffect(() => {
-    localStorage.setItem(KEY, JSON.stringify(items));
-  }, [items]);
+    if (restored) localStorage.setItem(KEY, JSON.stringify(items));
+  }, [items, restored]);
 
   const add: Ctx["add"] = (i) => {
     const key = `${i.productId}|${i.size}|${i.toppings.map((t) => t.id).sort().join(",")}`;
