@@ -1,4 +1,7 @@
 # Customer account upgrade
+- [ ] Replace link-only login with six-digit OTP verification, resend, and checkout return; real email code delivery requires template configuration and mailbox verification.
+- [ ] Save customer phone in existing profiles and test ownership-safe profile saving without overwriting name/email.
+- [ ] Fix cart restoration across full email callbacks and refresh, discovered during sign-in testing.
 - [ ] Diagnose cross-device link expectations and slow sign-in; streamline session handling and test desktop/mobile without sharing sessions.
 - [x] Diagnose email-login mismatch and use requested link-only fallback; 12 tests pass, browser checks confirm the form and expired-link error, and build is OK. Real mailbox link consumption remains unverified.
 - [x] Resolve verification-link return to checkout; validated signed-in session reaches checkout with cart intact and expired-link errors display. Six-digit email template still awaits sender-domain setup.
