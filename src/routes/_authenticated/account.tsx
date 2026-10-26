@@ -28,10 +28,11 @@ function Account() {
   const { data: orders } = useSuspenseQuery(customerOrdersQuery(user.id));
   const qc = useQueryClient(); const navigate = useNavigate();
   const [name, setName] = useState(data.profile?.full_name ?? "");
+  const [phone, setPhone] = useState(data.profile?.phone ?? "");
   const [editor, setEditor] = useState<SavedAddress | "new" | null>(null);
   const [busy, setBusy] = useState(false);
   async function refresh() { await qc.invalidateQueries({ queryKey: ["customer", user.id] }); }
-  async function profile(values: { full_name?: string; default_address_id?: string | null }) {
+  async function profile(values: { full_name?: string; phone?: string | null; default_address_id?: string | null }) {
     setBusy(true);
     const { error } = await supabase.from("profiles").upsert({ user_id: user.id, full_name: data.profile?.full_name ?? "", ...values, updated_at: new Date().toISOString() });
     setBusy(false);
@@ -53,7 +54,7 @@ function Account() {
   return <div className="min-h-screen"><SiteHeader /><main className="mx-auto max-w-4xl space-y-10 px-4 py-10">
     <div className="flex items-center justify-between gap-4"><h1 className="text-3xl">My Account</h1><Button variant="outline" onClick={logout}><LogOut />Logout</Button></div>
     <section className="space-y-4"><h2 className="text-2xl">Profile</h2><p className="break-all text-sm">{user.email} {user.email_confirmed_at && <span className="text-muted-foreground">· Verified</span>}</p>
-      <form className="flex flex-wrap items-end gap-3" onSubmit={e => { e.preventDefault(); void profile({ full_name: name.trim() }); }}><label className="flex-1 text-sm">Customer name<input className="mt-1 block w-full rounded-md border bg-card px-3 py-2" value={name} required minLength={2} maxLength={80} onChange={e => setName(e.target.value)} /></label><Button disabled={busy}>Save profile</Button></form>
+      <form className="flex flex-wrap items-end gap-3" onSubmit={e => { e.preventDefault(); void profile({ full_name: name.trim(), phone: phone.trim() || null }); }}><label className="min-w-0 flex-1 text-sm">Customer name<input className="mt-1 block w-full rounded-md border bg-card px-3 py-2" value={name} required minLength={2} maxLength={80} onChange={e => setName(e.target.value)} /></label><label className="min-w-0 flex-1 text-sm">Phone<input className="mt-1 block w-full rounded-md border bg-card px-3 py-2" type="tel" autoComplete="tel" pattern="\+?[0-9]{10,13}" maxLength={14} value={phone} onChange={e => setPhone(e.target.value)} /></label><Button disabled={busy}>Save profile</Button></form>
     </section>
     <section className="space-y-4"><div className="flex items-center justify-between gap-3"><h2 className="text-2xl">Saved addresses</h2><Button variant="outline" onClick={() => setEditor("new")}><Plus />Add address</Button></div>
       {!data.addresses.length && <p className="text-sm text-muted-foreground">No saved addresses.</p>}

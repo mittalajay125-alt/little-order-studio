@@ -1,16 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
-import { OTP_COOLDOWN_SECONDS, safeReturnPath } from "@/lib/customer";
+import { OTP_COOLDOWN_SECONDS, safeReturnPath, validOtp } from "@/lib/customer";
 import { useCustomerSession } from "@/lib/customer-session";
 
 export const Route = createFileRoute("/customer-login")({
   validateSearch: (search: Record<string, unknown>) => ({ returnTo: search["returnTo"] === "/checkout" ? "/checkout" as const : undefined }),
   head: () => ({ meta: [
     { title: "Customer login — Chocolate-n-More" },
-    { name: "description", content: "Sign in to your Chocolate-n-More account with a secure email link." },
+    { name: "description", content: "Sign in to your Chocolate-n-More account with a six-digit email code." },
     { property: "og:title", content: "Customer login — Chocolate-n-More" },
     { property: "og:description", content: "Your dessert orders and saved addresses." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
@@ -22,6 +22,9 @@ function CustomerLogin() {
   const { returnTo } = Route.useSearch();
   const { user, loading } = useCustomerSession();
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const verifiedUser = useRef<string | null>(null);
+  const navigating = useRef(false);
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -29,6 +32,16 @@ function CustomerLogin() {
   const [slow, setSlow] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const checking = loading || !!user;
+  async function finishSignIn() {
+    if (navigating.current) return;
+    navigating.current = true;
+    try {
+      const destination = safeReturnPath(returnTo ?? sessionStorage.getItem("customer-login-return"));
+      await navigate({ to: destination, replace: true });
+      sessionStorage.removeItem("customer-login-return");
+      sessionStorage.removeItem("customer-otp-email");
+    } finally { navigating.current = false; }
+  }
   useEffect(() => {
     setSlow(false);
     if (!checking) return;
@@ -38,18 +51,19 @@ function CustomerLogin() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.slice(1));
     const search = new URLSearchParams(window.location.search);
-    if (params.get("error") || search.get("error")) setError("This email link has already been used or has expired. Request a new email and open only the newest link once.");
+    if (params.get("error") || search.get("error")) setError("Your sign-in has expired. Request a new code.");
+    const pendingEmail = sessionStorage.getItem("customer-otp-email");
+    if (pendingEmail) { setEmail(pendingEmail); setSent(true); }
   }, []);
   useEffect(() => {
     if (loading || !user) return;
+    if (verifiedUser.current === user.id) return;
     let active = true;
     setError("");
     void supabase.auth.getUser().then(async ({ data, error }) => {
       if (!active) return;
-      if (error || !data.user) { setError(error?.message ?? "We could not confirm your sign-in. Request a new email link."); return; }
-      const destination = safeReturnPath(returnTo ?? sessionStorage.getItem("customer-login-return"));
-      await navigate({ to: destination, replace: true });
-      sessionStorage.removeItem("customer-login-return");
+      if (error || !data.user) { setError(error?.message ?? "We could not confirm your sign-in. Request a new code."); return; }
+      await finishSignIn();
     }).catch(() => { if (active) setError("We could not finish signing you in. Check your connection and try again."); });
     return () => { active = false; };
   }, [loading, user, returnTo, navigate, attempt]);
@@ -63,7 +77,7 @@ function CustomerLogin() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-  async function sendLink() {
+  async function sendCode() {
     if (busy || cooldown > 0) return;
     setBusy(true); setError("");
     try {
@@ -74,13 +88,26 @@ function CustomerLogin() {
       const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: callback.href } });
       if (error) { setError(error.message); return; }
       sessionStorage.setItem("customer-otp-cooldown", String(Date.now() + OTP_COOLDOWN_SECONDS * 1000));
+      sessionStorage.setItem("customer-otp-email", email.trim());
       setCooldown(OTP_COOLDOWN_SECONDS); setSent(true);
-    } catch { setError("Could not send your sign-in link. Please try again."); }
+      setCode("");
+    } catch { setError("Could not send your code. Please try again."); }
     finally { setBusy(false); }
   }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    await sendLink();
+    if (!sent) { await sendCode(); return; }
+    if (busy || !validOtp(code)) return;
+    setBusy(true); setError("");
+    try {
+      const result = await supabase.auth.verifyOtp({ email: email.trim(), token: code, type: "email" });
+      if (result.error || !result.data.user || !result.data.session) {
+        setError(result.error?.message ?? "Invalid or expired code. Request a new code."); return;
+      }
+      verifiedUser.current = result.data.user.id;
+      await finishSignIn();
+    } catch { setError("Could not verify your code. Check your connection and try again."); }
+    finally { setBusy(false); }
   }
   return <div className="min-h-screen"><SiteHeader />
     <main className="mx-auto max-w-sm px-4 py-16">
@@ -91,10 +118,10 @@ function CustomerLogin() {
         {(slow || error) && <Button variant="outline" onClick={() => { if (loading) window.location.reload(); else setAttempt(value => value + 1); }}>Try again</Button>}
       </div> : <form onSubmit={submit} className="space-y-4">
         <label className="block text-sm">Email<input className="mt-2 w-full rounded-md border bg-card px-4 py-3" type="email" autoComplete="email" required readOnly={sent} value={email} onChange={e => setEmail(e.target.value)} /></label>
-        {sent && <p className="text-sm text-muted-foreground">Open the newest email link in the browser you want to sign in. A link opened on your phone signs in your phone, not your laptop. No code is needed.</p>}
+        {sent && <label className="block text-sm">Email code<input className="mt-2 w-full rounded-md border bg-card px-4 py-3" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} /></label>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        <Button className="w-full" disabled={busy || cooldown > 0}>{busy ? "Please wait…" : cooldown > 0 ? `Try again in ${cooldown}s` : sent ? "Resend sign-in link" : "Send sign-in link"}</Button>
-        {sent && <Button type="button" variant="link" onClick={() => { setSent(false); setError(""); }}>Change email</Button>}
+        <Button className="w-full" disabled={busy || (sent ? !validOtp(code) : cooldown > 0)}>{busy ? "Please wait…" : sent ? "Verify code" : cooldown > 0 ? `Try again in ${cooldown}s` : "Send code"}</Button>
+        {sent && <div className="flex flex-wrap justify-between gap-2"><Button type="button" variant="link" disabled={busy || cooldown > 0} onClick={sendCode}>{cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}</Button><Button type="button" variant="link" disabled={busy} onClick={() => { setSent(false); setCode(""); setError(""); sessionStorage.removeItem("customer-otp-email"); }}>Change email</Button></div>}
       </form>}
       <Link to="/menu" className="mt-8 block text-sm text-muted-foreground underline">Back to menu</Link>
     </main>

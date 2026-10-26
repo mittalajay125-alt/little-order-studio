@@ -212,18 +212,21 @@ export type Database = {
         Row: {
           default_address_id: string | null
           full_name: string
+          phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           default_address_id?: string | null
           full_name?: string
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           default_address_id?: string | null
           full_name?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
