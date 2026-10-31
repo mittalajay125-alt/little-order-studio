@@ -83,7 +83,13 @@ function CustomerLogin() {
     setBusy(true); setError("");
     try {
       sessionStorage.setItem("customer-login-return", safeReturnPath(returnTo));
-      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } });
+      // Same-origin callback so the emailed code/link returns the customer to this
+      // device (and back to checkout) instead of Supabase's default site URL.
+      const emailRedirectTo = `${window.location.origin}/customer-login?returnTo=${encodeURIComponent(safeReturnPath(returnTo))}`;
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { shouldCreateUser: true, emailRedirectTo },
+      });
       if (error) { setError(otpErrorMessage(error.message)); return; }
       sessionStorage.setItem("customer-otp-cooldown", String(Date.now() + OTP_COOLDOWN_SECONDS * 1000));
       sessionStorage.setItem("customer-otp-email", email.trim());
