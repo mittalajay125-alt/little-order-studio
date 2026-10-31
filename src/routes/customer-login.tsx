@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
-import { OTP_COOLDOWN_SECONDS, safeReturnPath, validOtp } from "@/lib/customer";
+import { OTP_COOLDOWN_SECONDS, otpErrorMessage, safeReturnPath, validOtp } from "@/lib/customer";
 import { useCustomerSession } from "@/lib/customer-session";
 
 export const Route = createFileRoute("/customer-login")({
