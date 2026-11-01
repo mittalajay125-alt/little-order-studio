@@ -10,3 +10,13 @@ describe("Customer requirements", () => {
   it("returns to checkout without allowing external redirects", () => { expect(safeReturnPath("/checkout")).toBe("/checkout"); expect(safeReturnPath("https://example.com")).toBe("/account"); });
   it("formats address snapshots without mutating stored input", () => { const snapshot = formatAddress(validAddress); const changed = { ...validAddress, house: "25" }; expect(formatAddress(changed)).not.toBe(snapshot); expect(snapshot).toContain("12, Test Road"); });
 });
+import { isBlockedEmailLink } from "@/lib/customer";
+describe("Code-only customer sign-in", () => {
+  it("rejects magic-link and sign-up link sessions", () => {
+    expect(isBlockedEmailLink("#access_token=a&type=magiclink")).toBe(true);
+    expect(isBlockedEmailLink("#access_token=a&type=signup")).toBe(true);
+  });
+  it("keeps password recovery links working", () => {
+    expect(isBlockedEmailLink("#access_token=a&type=recovery")).toBe(false);
+  });
+});
