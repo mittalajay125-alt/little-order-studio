@@ -1,4 +1,7 @@
 # Customer account upgrade
+- [ ] Replace customer OTP with secure originating-browser email approval; architecture review first, then implementation and security tests. Preserve existing website/data; no automatic publishing.
+- [ ] Configure owned email sender domain for approval messages; blocked until the user completes email setup.
+- [ ] Verify actual emailed approval in separate browser sessions, including expiry, replay, cancellation, resend, and multiple requests; blocked until implementation and email sending are ready.
 - [x] Implement six-digit OTP verification, resend cooldown, error handling, and checkout return; automated tests pass. Actual email delivery remains blocked below.
 - [x] Save customer phone in existing profiles; desktop/mobile UI save and refresh passed, original values restored, existing email/name preserved.
 - [x] Fix cart restoration across full callbacks and refresh; automated and desktop/mobile checks confirm preservation.
@@ -12,7 +15,7 @@
 - [x] Integrate confirmed addresses and sign-in with checkout without losing cart.
 - [x] Test signed-in address CRUD, checkout, immutable order addresses, admin cancellation, logout, mobile layout, and controlled location outcomes; eight automated tests pass.
 - [x] Make customer login code-only: request/verify methods match, emailed sign-in links are rejected with a message; 24 tests pass.
-- [ ] Configure code-only signup/magic-link email templates and hosted six-digit OTP length: requires owned sender-domain setup and hosted settings; no paid service enabled, current default emails still contain links.
+- [x] Retire the previous code-only email configuration task; the latest request replaces OTP with originating-browser email approval.
 - [ ] Verify real email signup/login and complete password reset: waiting on access to an emailed code/reset link; the reset request was accepted but receipt and password update are unverified.
 - [ ] Verify two-customer isolation end-to-end: waiting on a second confirmed customer test account; owner-scoped policies reviewed, but tests used the owner's admin account.
 - [x] Report completed features, configuration blockers, and test results.
