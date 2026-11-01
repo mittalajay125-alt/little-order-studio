@@ -19,3 +19,4 @@
 - Customer queries briefly reuse owner-keyed data and create missing profiles with insert-only conflict handling; repeat login must not overwrite saved profile fields.
 - OTP verification trusts the server-validated verifyOtp response for navigation; returning sessions still use getUser and protected routes keep their managed gate. Profile email comes from Auth, contact phone from the existing profiles row.
 - Cart persistence writes only after storage restoration completes, so full-page authentication and refresh cannot overwrite saved items with the initial empty state.
+- Customer sign-in is code-only: sessions created by emailed magiclink/signup links are discarded locally and redirected to /customer-login; recovery links stay allowed for password resets.

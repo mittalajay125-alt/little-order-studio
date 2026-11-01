@@ -20,11 +20,11 @@ describe("Customer email-code authentication", () => {
     if (!Component) throw new Error("Customer login component is missing");
     return render(<Component />);
   };
-  it("requests account creation and a same-origin checkout callback", async () => {
+  it("requests a code with signInWithOtp and shouldCreateUser only", async () => {
     mocks.send.mockResolvedValue({ error: null }); open();
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    await waitFor(() => expect(mocks.send).toHaveBeenCalledWith({ email: "customer@example.com", options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/customer-login?returnTo=%2Fcheckout` } }));
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledWith({ email: "customer@example.com", options: { shouldCreateUser: true } }));
     expect(sessionStorage.getItem("customer-login-return")).toBe("/checkout");
   });
   it("does not record success or a cooldown after an Auth refusal", async () => {
@@ -94,4 +94,8 @@ describe("Customer email-code authentication", () => {
     expect(mocks.verify).not.toHaveBeenCalled();
   });
 
+  it("tells the customer when a sign-in link was rejected", async () => {
+    window.history.replaceState({}, "", "/customer-login?link=blocked"); open();
+    expect((await screen.findByRole("alert")).textContent).toContain("6-digit code");
+  });
 });
