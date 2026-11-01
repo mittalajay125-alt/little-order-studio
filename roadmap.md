@@ -11,6 +11,7 @@
 - [x] Add secure customer profiles, saved addresses, and order ownership.
 - [x] Integrate confirmed addresses and sign-in with checkout without losing cart.
 - [x] Test signed-in address CRUD, checkout, immutable order addresses, admin cancellation, logout, mobile layout, and controlled location outcomes; eight automated tests pass.
+- [x] Make customer login code-only: request/verify methods match, emailed sign-in links are rejected with a message; 24 tests pass.
 - [ ] Configure code-only signup/magic-link email templates and hosted six-digit OTP length: requires owned sender-domain setup and hosted settings; no paid service enabled, current default emails still contain links.
 - [ ] Verify real email signup/login and complete password reset: waiting on access to an emailed code/reset link; the reset request was accepted but receipt and password update are unverified.
 - [ ] Verify two-customer isolation end-to-end: waiting on a second confirmed customer test account; owner-scoped policies reviewed, but tests used the owner's admin account.
