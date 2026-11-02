@@ -20,3 +20,4 @@
 - OTP verification trusts the server-validated verifyOtp response for navigation; returning sessions still use getUser and protected routes keep their managed gate. Profile email comes from Auth, contact phone from the existing profiles row.
 - Cart persistence writes only after storage restoration completes, so full-page authentication and refresh cannot overwrite saved items with the initial empty state.
 - Customer sign-in is code-only: sessions created by emailed magiclink/signup links are discarded locally and redirected to /customer-login; recovery links stay allowed for password resets.
+- Cross-device approval policy is prepared separately from the current OTP UI; do not enable it until server-owned atomic request storage, originating-browser cookie checks, and dedicated approval email delivery are implemented and tested. The shared policy module is not an authorization boundary.
