@@ -1,5 +1,6 @@
 # Customer account upgrade
 - [ ] Replace customer OTP with secure originating-browser email approval; architecture review first, then implementation and security tests. Preserve existing website/data; no automatic publishing.
+- [x] Approve architecture and prepare capability hashing, expiry, polling, and transition policy tests; these are not a working authentication flow.
 - [ ] Configure owned email sender domain for approval messages; blocked until the user completes email setup.
 - [ ] Verify actual emailed approval in separate browser sessions, including expiry, replay, cancellation, resend, and multiple requests; blocked until implementation and email sending are ready.
 - [x] Implement six-digit OTP verification, resend cooldown, error handling, and checkout return; automated tests pass. Actual email delivery remains blocked below.
