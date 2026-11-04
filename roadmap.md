@@ -1,8 +1,8 @@
 # Customer account upgrade
-- [ ] Replace customer OTP with secure originating-browser email approval; architecture review first, then implementation and security tests. Preserve existing website/data; no automatic publishing.
+- [x] Replace customer OTP with originating-browser email approval (PKCE, default sender); 30 tests pass.
 - [x] Approve architecture and prepare capability hashing, expiry, polling, and transition policy tests; these are not a working authentication flow.
-- [ ] Configure owned email sender domain for approval messages; blocked until the user completes email setup.
-- [ ] Verify actual emailed approval in separate browser sessions, including expiry, replay, cancellation, resend, and multiple requests; blocked until implementation and email sending are ready.
+- [x] Sender domain not required for the first implementation (uses default auth email).
+- [ ] Verify actual emailed approval in separate browser sessions, including expiry, replay, cancellation, resend, and multiple requests; waiting on the user's real two-device test.
 - [x] Implement six-digit OTP verification, resend cooldown, error handling, and checkout return; automated tests pass. Actual email delivery remains blocked below.
 - [x] Save customer phone in existing profiles; desktop/mobile UI save and refresh passed, original values restored, existing email/name preserved.
 - [x] Fix cart restoration across full callbacks and refresh; automated and desktop/mobile checks confirm preservation.

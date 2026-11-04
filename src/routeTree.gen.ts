@@ -16,6 +16,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CustomerLoginRouteImport } from './routes/customer-login'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as OrderNumberRouteImport } from './routes/order.$number'
@@ -54,6 +55,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/customer-login': typeof CustomerLoginRoute
   '/menu': typeof MenuRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/order/$number': typeof OrderNumberRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/customer-login'
     | '/menu'
     | '/reset-password'
+    | '/verify-email'
     | '/account'
     | '/admin'
     | '/order/$number'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/customer-login'
     | '/menu'
     | '/reset-password'
+    | '/verify-email'
     | '/account'
     | '/admin'
     | '/order/$number'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/customer-login'
     | '/menu'
     | '/reset-password'
+    | '/verify-email'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/order/$number'
@@ -150,6 +162,7 @@ export interface RootRouteChildren {
   CustomerLoginRoute: typeof CustomerLoginRoute
   MenuRoute: typeof MenuRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   OrderNumberRoute: typeof OrderNumberRoute
 }
 
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -249,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomerLoginRoute: CustomerLoginRoute,
   MenuRoute: MenuRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   OrderNumberRoute: OrderNumberRoute,
 }
 export const routeTree = rootRouteImport

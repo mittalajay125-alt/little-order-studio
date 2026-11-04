@@ -1,101 +1,98 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ navigate: vi.fn(), send: vi.fn(), verify: vi.fn(), getUser: vi.fn(), session: { user: null as null | { id: string }, loading: false } }));
+const mocks = vi.hoisted(() => ({ navigate: vi.fn(), request: vi.fn(), claim: vi.fn(), getUser: vi.fn(), setSession: vi.fn(), session: { user: null as null | { id: string }, loading: false } }));
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: object) => ({ options, useSearch: () => ({ returnTo: "/checkout" }) }),
   useNavigate: () => mocks.navigate,
   Link: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { signInWithOtp: mocks.send, verifyOtp: mocks.verify, getUser: mocks.getUser } } }));
+vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
+vi.mock("@/lib/login-approval.functions", () => ({ requestEmailApproval: mocks.request, claimEmailApproval: mocks.claim }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getUser: mocks.getUser, setSession: mocks.setSession } } }));
 vi.mock("@/lib/customer-session", () => ({ useCustomerSession: () => mocks.session }));
 vi.mock("@/components/SiteHeader", () => ({ SiteHeader: () => null }));
 import { Route } from "@/routes/customer-login";
 
-describe("Customer email-code authentication", () => {
-  beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); mocks.session.user = null; mocks.session.loading = false; window.history.replaceState({}, "", "/customer-login"); });
-  afterEach(cleanup);
-  const open = () => {
-    const Component = Route.options.component;
-    if (!Component) throw new Error("Customer login component is missing");
-    return render(<Component />);
-  };
-  it("requests a code with signInWithOtp and shouldCreateUser only", async () => {
-    mocks.send.mockResolvedValue({ error: null }); open();
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    await waitFor(() => expect(mocks.send).toHaveBeenCalledWith({ email: "customer@example.com", options: { shouldCreateUser: true } }));
-    expect(sessionStorage.getItem("customer-login-return")).toBe("/checkout");
+const open = () => { const C = Route.options.component!; return render(<C />); };
+const submitEmail = () => {
+  fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
+  fireEvent.click(screen.getByRole("button", { name: "Send verification link" }));
+};
+
+describe("Customer email-link approval login", () => {
+  beforeEach(() => { vi.clearAllMocks(); vi.useRealTimers(); sessionStorage.clear(); localStorage.clear(); mocks.session.user = null; mocks.session.loading = false; window.history.replaceState({}, "", "/customer-login"); });
+  afterEach(() => { cleanup(); vi.useRealTimers(); });
+
+  it("has no 6-digit code field", () => {
+    open();
+    expect(screen.queryByLabelText("Email code")).toBeNull();
   });
-  it("does not record success or a cooldown after an Auth refusal", async () => {
-    mocks.send.mockResolvedValue({ error: { message: "Email rate limit exceeded" } }); open();
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    await screen.findByRole("alert");
-    expect(sessionStorage.getItem("customer-otp-cooldown")).toBeNull();
-    expect(mocks.navigate).not.toHaveBeenCalled();
+
+  it("requests a link bound to a fresh 64-hex browser key", async () => {
+    mocks.request.mockResolvedValue({ ok: true, requestId: "r1" }); open(); submitEmail();
+    await screen.findByText(/Waiting for verification/);
+    const arg = mocks.request.mock.calls[0][0].data;
+    expect(arg.email).toBe("customer@example.com");
+    expect(arg.browserSecret).toMatch(/^[a-f0-9]{64}$/);
+    expect(JSON.parse(localStorage.getItem("cnm-login-request")!).requestId).toBe("r1");
   });
-  it("returns to checkout only after Auth revalidates the session", async () => {
+
+  it("shows a server refusal and does not start waiting", async () => {
+    mocks.request.mockResolvedValue({ ok: false, error: "Please wait 30 seconds before requesting another link." }); open(); submitEmail();
+    expect((await screen.findByRole("alert")).textContent).toContain("30 seconds");
+    expect(localStorage.getItem("cnm-login-request")).toBeNull();
+  });
+
+  it("polls every 2 seconds and signs in this browser once verified", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mocks.request.mockResolvedValue({ ok: true, requestId: "r1" });
+    mocks.claim.mockResolvedValueOnce({ status: "pending" }).mockResolvedValueOnce({ status: "signedIn", accessToken: "a", refreshToken: "b" });
+    mocks.setSession.mockResolvedValue({ error: null });
+    open(); submitEmail();
+    await screen.findByText(/Waiting for verification/);
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(mocks.claim).toHaveBeenCalledTimes(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    await waitFor(() => expect(mocks.setSession).toHaveBeenCalledWith({ access_token: "a", refresh_token: "b" }));
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/checkout", replace: true });
+  });
+
+  it("stops polling after 60 seconds and offers to check again", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mocks.request.mockResolvedValue({ ok: true, requestId: "r1" });
+    mocks.claim.mockResolvedValue({ status: "pending" });
+    open(); submitEmail();
+    await screen.findByText(/Waiting for verification/);
+    await act(async () => { await vi.advanceTimersByTimeAsync(62_000); });
+    expect(await screen.findByRole("button", { name: "Check again" })).toBeTruthy();
+    const calls = mocks.claim.mock.calls.length;
+    expect(calls).toBeLessThanOrEqual(30);
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(mocks.claim.mock.calls.length).toBe(calls);
+  });
+
+  it("does not sign in when the request expired", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mocks.request.mockResolvedValue({ ok: true, requestId: "r1" });
+    mocks.claim.mockResolvedValue({ status: "expired" });
+    open(); submitEmail();
+    await screen.findByText(/Waiting for verification/);
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect((await screen.findByRole("alert")).textContent).toContain("expired");
+    expect(mocks.setSession).not.toHaveBeenCalled();
+  });
+
+  it("returns to checkout only after Auth revalidates an existing session", async () => {
     mocks.session.user = { id: "customer" };
     mocks.getUser.mockResolvedValue({ data: { user: { id: "customer" } }, error: null }); open();
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: "/checkout", replace: true }));
-    expect(mocks.getUser).toHaveBeenCalled();
-  });
-  it("does not navigate if Auth rejects the apparent session", async () => {
-    mocks.session.user = { id: "customer" };
-    mocks.getUser.mockResolvedValue({ data: { user: null }, error: { message: "Session expired" } }); open();
-    await screen.findByRole("alert");
-    expect(mocks.navigate).not.toHaveBeenCalled();
-  });
-  it("does not sign in the original browser just because its email was sent", async () => {
-    mocks.send.mockResolvedValue({ error: null }); open();
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    await waitFor(() => expect(sessionStorage.getItem("customer-otp-cooldown")).not.toBeNull());
-    expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(mocks.getUser).not.toHaveBeenCalled();
-  });
-  it("verifies a callback once without an artificial navigation timer", async () => {
-    mocks.session.user = { id: "customer" };
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "customer" } }, error: null }); open();
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledTimes(1));
-    expect(mocks.getUser).toHaveBeenCalledTimes(1);
-  });
-  it("handles a failed verification connection without navigating", async () => {
-    mocks.session.user = { id: "customer" };
-    mocks.getUser.mockRejectedValue(new Error("Network unavailable")); open();
-    await screen.findByRole("alert");
-    expect(mocks.navigate).not.toHaveBeenCalled();
-  });
-  it("verifies the six-digit code on the requesting device using email type", async () => {
-    mocks.send.mockResolvedValue({ error: null });
-    mocks.verify.mockResolvedValue({ data: { user: { id: "customer" }, session: { user: { id: "customer" } } }, error: null }); open();
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    await screen.findByLabelText("Email code");
-    fireEvent.change(screen.getByLabelText("Email code"), { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: "Verify code" }));
-    await waitFor(() => expect(mocks.verify).toHaveBeenCalledWith({ email: "customer@example.com", token: "123456", type: "email" }));
-    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/checkout", replace: true });
-    expect(mocks.getUser).not.toHaveBeenCalled();
-  });
-  it("rejects invalid codes without signing the customer in", async () => {
-    sessionStorage.setItem("customer-otp-email", "customer@example.com");
-    mocks.verify.mockResolvedValue({ data: { user: null, session: null }, error: { message: "Code expired" } }); open();
-    fireEvent.change(screen.getByLabelText("Email code"), { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: "Verify code" }));
-    await screen.findByRole("alert");
-    expect(mocks.navigate).not.toHaveBeenCalled();
-  });
-  it("does not verify a code shorter than six digits", async () => {
-    sessionStorage.setItem("customer-otp-email", "customer@example.com"); open();
-    fireEvent.change(screen.getByLabelText("Email code"), { target: { value: "12345" } });
-    fireEvent.click(screen.getByRole("button", { name: "Verify code" }));
-    expect(mocks.verify).not.toHaveBeenCalled();
   });
 
-  it("tells the customer when a sign-in link was rejected", async () => {
-    window.history.replaceState({}, "", "/customer-login?link=blocked"); open();
-    expect((await screen.findByRole("alert")).textContent).toContain("6-digit code");
+  it("does not navigate if Auth rejects the apparent session", async () => {
+    mocks.session.user = { id: "customer" };
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: { message: "expired" } }); open();
+    await screen.findByRole("alert");
+    expect(mocks.navigate).not.toHaveBeenCalled();
   });
 });
