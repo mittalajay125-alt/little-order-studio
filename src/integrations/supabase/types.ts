@@ -68,6 +68,42 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_login_requests: {
+        Row: {
+          auth_code: string | null
+          browser_hash: string
+          code_verifier: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          status: string
+          verified_at: string | null
+        }
+        Insert: {
+          auth_code?: string | null
+          browser_hash: string
+          code_verifier: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          status?: string
+          verified_at?: string | null
+        }
+        Update: {
+          auth_code?: string | null
+          browser_hash?: string
+          code_verifier?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
