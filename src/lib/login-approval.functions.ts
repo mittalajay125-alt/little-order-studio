@@ -67,14 +67,23 @@ export const claimEmailApproval = createServerFn({ method: "POST" })
     const browserHash = await hashApprovalCapability(data.browserSecret);
     const now = new Date().toISOString();
     const { data: rows } = await supabaseAdmin.from("customer_login_requests")
-      .update({ status: "consumed", auth_code: null })
+      .update({ status: "consumed" })
       .eq("id", data.requestId).eq("browser_hash", browserHash).eq("status", "verified").gt("expires_at", now)
-      .select("auth_code:code_verifier, code_verifier");
+      .select("auth_code, code_verifier");
     const claimed = rows?.[0];
     if (!claimed) {
       const { data: row } = await supabaseAdmin.from("customer_login_requests").select("status, expires_at").eq("id", data.requestId).eq("browser_hash", browserHash).maybeSingle();
-      if (row?.status === "pending" && row.expires_at > now) return { status: "pending" as const };
+      if (row?.status === "pending" && new Date(row.expires_at).getTime() > Date.now()) return { status: "pending" as const };
       return { status: "expired" as const };
     }
-    return { status: "expired" as const };
+    await supabaseAdmin.from("customer_login_requests").update({ auth_code: null, code_verifier: "used" }).eq("id", data.requestId);
+    const { url, key } = authEnv();
+    const res = await fetch(`${url}/auth/v1/token?grant_type=pkce`, {
+      method: "POST",
+      headers: { apikey: key, "content-type": "application/json" },
+      body: JSON.stringify({ auth_code: claimed.auth_code, code_verifier: claimed.code_verifier }),
+    });
+    const session = await res.json().catch(() => null) as { access_token?: string; refresh_token?: string } | null;
+    if (!res.ok || !session?.access_token || !session.refresh_token) return { status: "failed" as const };
+    return { status: "signedIn" as const, accessToken: session.access_token, refreshToken: session.refresh_token };
   });
