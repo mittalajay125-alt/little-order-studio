@@ -1,3 +1,9 @@
+# Phase 2 delivery charges
+- [x] Inspect checkout, saved-address coordinates, settings, and order calculation structure.
+- [ ] Obtain exact shop delivery location; blocked because shop coordinates and stall address are not configured.
+- [ ] Implement configurable shop coordinates, straight-line delivery pricing, checkout distance display and range blocking, and saved order distance.
+- [ ] Test delivery boundaries, pickup exemption, address changes, and authoritative order totals; do not publish automatically.
+
 # Customer account upgrade
 - [x] Replace customer OTP with originating-browser email approval (PKCE, default sender); 30 tests pass.
 - [x] Approve architecture and prepare capability hashing, expiry, polling, and transition policy tests; these are not a working authentication flow.
