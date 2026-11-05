@@ -157,6 +157,7 @@ export type Database = {
           customer_phone: string
           delivery_address: string | null
           delivery_charge: number
+          delivery_distance_km: number | null
           fulfillment: string
           id: string
           notes: string | null
@@ -175,6 +176,7 @@ export type Database = {
           customer_phone: string
           delivery_address?: string | null
           delivery_charge?: number
+          delivery_distance_km?: number | null
           fulfillment: string
           id?: string
           notes?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           customer_phone?: string
           delivery_address?: string | null
           delivery_charge?: number
+          delivery_distance_km?: number | null
           fulfillment?: string
           id?: string
           notes?: string | null
@@ -284,6 +287,8 @@ export type Database = {
           delivery_enabled: boolean
           id: number
           instagram: string
+          shop_latitude: number | null
+          shop_longitude: number | null
           stall_address: string
           updated_at: string
         }
@@ -294,6 +299,8 @@ export type Database = {
           delivery_enabled?: boolean
           id?: number
           instagram?: string
+          shop_latitude?: number | null
+          shop_longitude?: number | null
           stall_address?: string
           updated_at?: string
         }
@@ -304,6 +311,8 @@ export type Database = {
           delivery_enabled?: boolean
           id?: number
           instagram?: string
+          shop_latitude?: number | null
+          shop_longitude?: number | null
           stall_address?: string
           updated_at?: string
         }
@@ -332,6 +341,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delivery_charge_for_km: { Args: { distance: number }; Returns: number }
+      delivery_distance_km: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -351,18 +365,32 @@ export type Database = {
         }
         Returns: string
       }
-      place_order: {
-        Args: {
-          _address: string
-          _fulfillment: string
-          _items: Json
-          _name: string
-          _notes: string
-          _payment: string
-          _phone: string
-        }
-        Returns: string
-      }
+      place_order:
+        | {
+            Args: {
+              _address: string
+              _fulfillment: string
+              _items: Json
+              _name: string
+              _notes: string
+              _payment: string
+              _phone: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _address: string
+              _address_id: string
+              _fulfillment: string
+              _items: Json
+              _name: string
+              _notes: string
+              _payment: string
+              _phone: string
+            }
+            Returns: string
+          }
     }
     Enums: {
       app_role: "admin"

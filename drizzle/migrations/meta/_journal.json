@@ -36,6 +36,13 @@
       "when": 1793788774004,
       "tag": "0004_customer_login_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793864170426,
+      "tag": "0005_distance_based_delivery",
+      "breakpoints": true
     }
   ]
 }
