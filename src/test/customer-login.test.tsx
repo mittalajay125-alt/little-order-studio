@@ -32,7 +32,7 @@ describe("Customer email-link approval login", () => {
   it("requests a link bound to a fresh 64-hex browser key", async () => {
     mocks.request.mockResolvedValue({ ok: true, requestId: "r1" }); open(); submitEmail();
     await screen.findByText(/Waiting for verification/);
-    const arg = mocks.request.mock.calls[0][0].data;
+    const arg = mocks.request.mock.calls[0]?.[0].data;
     expect(arg.email).toBe("customer@example.com");
     expect(arg.browserSecret).toMatch(/^[a-f0-9]{64}$/);
     expect(JSON.parse(localStorage.getItem("cnm-login-request")!).requestId).toBe("r1");
