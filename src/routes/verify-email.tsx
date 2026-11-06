@@ -39,7 +39,7 @@ function VerifyEmail() {
         <p className="text-sm text-muted-foreground">Go back to the device where you asked to sign in — it will sign in automatically. You can close this page.</p></>}
       {state === "failed" && <><h1 className="mb-4 text-3xl">Link not valid</h1>
         <p className="text-sm text-muted-foreground">This link has expired or was already used. Request a new link on the device where you want to sign in.</p>
-        <Link to="/customer-login" className="mt-6 inline-block text-sm underline">Customer login</Link></>}
+        <Link to="/customer-login" search={{ returnTo: undefined }} className="mt-6 inline-block text-sm underline">Customer login</Link></>}
     </main>
   </div>;
 }

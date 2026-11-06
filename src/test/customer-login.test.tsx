@@ -14,7 +14,7 @@ vi.mock("@/lib/customer-session", () => ({ useCustomerSession: () => mocks.sessi
 vi.mock("@/components/SiteHeader", () => ({ SiteHeader: () => null }));
 import { Route } from "@/routes/customer-login";
 
-const open = () => { const C = Route.options.component!; return render(<C />); };
+const open = () => { const C = Route.options.component; if (!C) throw new Error("Missing login component"); return render(<C />); };
 const submitEmail = () => {
   fireEvent.change(screen.getByLabelText("Email"), { target: { value: "customer@example.com" } });
   fireEvent.click(screen.getByRole("button", { name: "Send verification link" }));
@@ -32,10 +32,11 @@ describe("Customer email-link approval login", () => {
   it("requests a link bound to a fresh 64-hex browser key", async () => {
     mocks.request.mockResolvedValue({ ok: true, requestId: "r1" }); open(); submitEmail();
     await screen.findByText(/Waiting for verification/);
-    const arg = mocks.request.mock.calls[0][0].data;
+    const arg = mocks.request.mock.calls[0]?.[0].data;
+    if (!arg) throw new Error("Login request was not called");
     expect(arg.email).toBe("customer@example.com");
     expect(arg.browserSecret).toMatch(/^[a-f0-9]{64}$/);
-    expect(JSON.parse(localStorage.getItem("cnm-login-request")!).requestId).toBe("r1");
+    expect(JSON.parse(localStorage.getItem("cnm-login-request") ?? "{}").requestId).toBe("r1");
   });
 
   it("shows a server refusal and does not start waiting", async () => {

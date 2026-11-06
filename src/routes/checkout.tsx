@@ -13,6 +13,7 @@ import { customerDataQuery } from "@/lib/customer-queries";
 import { AddressEditor } from "@/components/AddressEditor";
 import { Button } from "@/components/ui/button";
 import { formatAddress } from "@/lib/customer";
+import { deliveryQuote } from "@/lib/delivery";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -50,14 +51,19 @@ function Checkout() {
   const [payment, setPayment] = useState<"cash" | "upi">("cash");
   const [busy, setBusy] = useState(false);
 
-  const deliveryOn = settings?.delivery_enabled ?? true;
-  const dc = fulfillment === "delivery" ? settings?.delivery_charge ?? 0 : 0;
-  const total = cart.subtotal + dc;
+  const deliveryOn = settings?.delivery_enabled ?? false;
+  const chosen = customer.data?.addresses.find(a => a.id === (selectedAddress || customer.data?.profile?.default_address_id));
+  const origin = { latitude: settings?.shop_latitude ?? null, longitude: settings?.shop_longitude ?? null };
+  const quote = chosen ? deliveryQuote(origin, chosen) : { distance: null, charge: null };
+  const deliveryError = !settings ? "Loading delivery settings…" : !deliveryOn ? "Home delivery is currently unavailable. Choose Stall Pickup." : origin.latitude === null || origin.longitude === null ? "Shop delivery location is not configured. Choose Stall Pickup." : !chosen ? "Select a saved delivery address." : quote.distance === null ? "This address needs location coordinates. Edit it to add its location, or choose Stall Pickup." : quote.charge === null ? "Home delivery is unavailable beyond 10 km. Please choose Stall Pickup." : "";
+  const dc = fulfillment === "delivery" ? quote.charge : 0;
+  const deliveryBlocked = fulfillment === "delivery" && !!deliveryError;
+  const total = dc === null ? null : cart.subtotal + dc;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    const chosen = customer.data?.addresses.find(a => a.id === (selectedAddress || customer.data?.profile?.default_address_id));
+    if (deliveryBlocked) { toast.error(deliveryError); return; }
     const parsed = schema.safeParse({ name: fulfillment === "delivery" ? chosen?.full_name ?? "" : name, phone: (fulfillment === "delivery" ? chosen?.phone ?? "" : phone).replace(/[\s-]/g, ""), address: "", notes });
     if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Check your details"); return; }
     if (fulfillment === "delivery" && !chosen) { toast.error("Select a confirmed delivery address"); return; }
@@ -133,10 +139,10 @@ function Checkout() {
           <section className="space-y-3">
             <h2 className="text-2xl font-semibold">Pickup or delivery</h2>
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" className={opt(fulfillment === "pickup")} onClick={() => setFulfillment("pickup")}>Stall Pickup</button>
-              <button type="button" disabled={!deliveryOn} className={`${opt(fulfillment === "delivery")} disabled:opacity-50`} onClick={() => setFulfillment("delivery")}>
+              <Button variant="outline" type="button" className={`h-auto whitespace-normal ${opt(fulfillment === "pickup")}`} onClick={() => setFulfillment("pickup")}>Stall Pickup</Button>
+              <Button variant="outline" type="button" disabled={!deliveryOn} className={`h-auto whitespace-normal ${opt(fulfillment === "delivery")} disabled:opacity-50`} onClick={() => setFulfillment("delivery")}>
                 Home Delivery{!deliveryOn && " (unavailable)"}
-              </button>
+              </Button>
             </div>
             {fulfillment === "delivery" && (
               <div className="space-y-3">
@@ -145,6 +151,8 @@ function Checkout() {
                 {customer.error && <p role="alert" className="text-sm text-destructive">Could not load your addresses. <Button type="button" variant="link" onClick={() => customer.refetch()}>Retry</Button></p>}
                 {customer.data?.addresses.map(a => <label key={a.id} className="flex gap-3 rounded-md border bg-card p-3"><input type="radio" name="delivery-address" value={a.id} checked={(selectedAddress || customer.data?.profile?.default_address_id) === a.id} onChange={() => setSelectedAddress(a.id)} /><span className="text-sm"><strong>{a.label}</strong> · {a.full_name}<span className="mt-1 block text-muted-foreground">{formatAddress(a)}</span></span></label>)}
                 <Button type="button" variant="outline" onClick={() => setAddingAddress(true)}>Add new address</Button>
+                {deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}
+                {chosen && quote.distance === null && <Button type="button" variant="link" asChild><Link to="/account">Edit saved address</Link></Button>}
               </div>
             )}
             <textarea className={field} rows={2} placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} />
@@ -164,13 +172,16 @@ function Checkout() {
           <h2 className="text-xl font-semibold">Order summary</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between"><dt>Items</dt><dd>{inr(cart.subtotal)}</dd></div>
-            {fulfillment === "delivery" && <div className="flex justify-between"><dt>Delivery charge</dt><dd>{inr(dc)}</dd></div>}
-            <div className="flex justify-between border-t border-cocoa-foreground/20 pt-3 text-lg font-semibold"><dt>Total</dt><dd className="text-caramel">{inr(total)}</dd></div>
+            {fulfillment === "delivery" && <>
+              <div className="flex justify-between gap-3"><dt>Distance (straight-line)</dt><dd className="shrink-0">{quote.distance === null ? "—" : `${quote.distance.toFixed(2)} km`}</dd></div>
+              <div className="flex justify-between"><dt>Delivery charge</dt><dd>{dc === null ? "Unavailable" : inr(dc)}</dd></div>
+            </>}
+            <div className="flex justify-between border-t border-cocoa-foreground/20 pt-3 text-lg font-semibold"><dt>Total</dt><dd className="text-caramel">{total === null ? "—" : inr(total)}</dd></div>
           </dl>
           <p className="mt-2 text-xs opacity-70">Final total is confirmed by our system when you place the order.</p>
-          <button disabled={busy || (fulfillment === "delivery" && !(selectedAddress || customer.data?.profile?.default_address_id))} className="mt-6 w-full rounded-full bg-caramel py-3.5 font-semibold text-accent-foreground disabled:opacity-60">
-            {busy ? "Placing order…" : `Place order · ${inr(total)}`}
-          </button>
+          <Button disabled={busy || deliveryBlocked} className="mt-6 h-auto w-full whitespace-normal rounded-full bg-caramel py-3.5 font-semibold text-accent-foreground disabled:opacity-60">
+            {busy ? "Placing order…" : deliveryBlocked ? "Home delivery unavailable" : `Place order · ${inr(total ?? cart.subtotal)}`}
+          </Button>
         </aside>
       </form>
       {addingAddress && <div className="mx-auto max-w-3xl px-4 pb-8"><AddressEditor userId={user.id} name={name || customer.data?.profile?.full_name} onCancel={() => setAddingAddress(false)} onSaved={async a => { setSelectedAddress(a.id); setAddingAddress(false); await customer.refetch(); }} /></div>}

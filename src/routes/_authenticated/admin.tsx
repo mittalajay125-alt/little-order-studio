@@ -7,6 +7,7 @@ import { RefreshCw, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUSES, productsQuery, settingsQuery, type Product } from "@/lib/shop";
 import { inr } from "@/lib/cart";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Item = { id: string; product_name: string; size: string | null; unit_price: number; toppings: string[]; quantity: number; line_total: number };
 type Order = {
   id: string; order_number: string; customer_name: string; customer_phone: string; fulfillment: string;
-  delivery_address: string | null; notes: string | null; subtotal: number; delivery_charge: number; total: number;
+  delivery_address: string | null; delivery_distance_km: number | null; notes: string | null; subtotal: number; delivery_charge: number; total: number;
   payment_method: string; status: string; payment_status: string; created_at: string; order_items: Item[];
 };
 
@@ -135,6 +136,7 @@ function Orders() {
               <p><b>{o.customer_name}</b> · <a className="underline" href={`tel:${o.customer_phone}`}>{o.customer_phone}</a></p>
               <p>{o.fulfillment === "delivery" ? "🚚 Home Delivery" : "🏪 Stall Pickup"} · {o.payment_method.toUpperCase()}</p>
               {o.delivery_address && <p className="mt-1 rounded-lg bg-muted p-2">{o.delivery_address}</p>}
+              {o.delivery_distance_km !== null && <p className="mt-1">Delivery distance: {o.delivery_distance_km.toFixed(2)} km (straight-line)</p>}
               {o.notes && <p className="mt-1 italic text-muted-foreground">Note: {o.notes}</p>}
             </div>
             <ul className="mt-3 divide-y border-y text-sm">
@@ -211,13 +213,15 @@ function Settings() {
   if (!form) return <p>Loading…</p>;
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (!form) return;
     const { error } = await supabase.from("settings").update({
-      delivery_charge: Math.max(0, Math.round(Number(form!.delivery_charge) || 0)),
-      delivery_enabled: !!form!.delivery_enabled,
-      contact_phone: String(form!.contact_phone).slice(0, 30),
-      contact_whatsapp: String(form!.contact_whatsapp).slice(0, 30),
-      stall_address: String(form!.stall_address).slice(0, 300),
-      instagram: String(form!.instagram).slice(0, 100),
+      shop_latitude: form.shop_latitude,
+      shop_longitude: form.shop_longitude,
+      delivery_enabled: !!form.delivery_enabled,
+      contact_phone: String(form.contact_phone).slice(0, 30),
+      contact_whatsapp: String(form.contact_whatsapp).slice(0, 30),
+      stall_address: String(form.stall_address).slice(0, 300),
+      instagram: String(form.instagram).slice(0, 100),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
     if (error) { toast.error(error.message); return; }
@@ -230,12 +234,14 @@ function Settings() {
     <form onSubmit={save} className="max-w-lg space-y-4">
       <h1 className="text-3xl font-bold">Settings</h1>
       <label className="flex items-center gap-2"><input type="checkbox" checked={!!form.delivery_enabled} onChange={(e) => setForm({ ...form, delivery_enabled: e.target.checked })} className="h-4 w-4 accent-primary" /> Offer home delivery</label>
-      <label className="block text-sm">Delivery charge (₹)<input type="number" min={0} className={f} value={String(form.delivery_charge)} onChange={set("delivery_charge")} /></label>
+      <label className="block text-sm">Shop delivery latitude<input type="number" step="any" min={-90} max={90} required={form.delivery_enabled} className={f} value={form.shop_latitude ?? ""} onChange={e => setForm({ ...form, shop_latitude: e.target.value === "" ? null : Number(e.target.value) })} /></label>
+      <label className="block text-sm">Shop delivery longitude<input type="number" step="any" min={-180} max={180} required={form.delivery_enabled} className={f} value={form.shop_longitude ?? ""} onChange={e => setForm({ ...form, shop_longitude: e.target.value === "" ? null : Number(e.target.value) })} /></label>
+      <dl className="space-y-1 text-sm"><div className="flex justify-between"><dt>0–3 km</dt><dd>₹30</dd></div><div className="flex justify-between"><dt>Above 3–6 km</dt><dd>₹40</dd></div><div className="flex justify-between"><dt>Above 6–10 km</dt><dd>₹60</dd></div><div className="flex justify-between"><dt>Above 10 km</dt><dd>Unavailable</dd></div></dl>
       <label className="block text-sm">Phone<input className={f} value={String(form.contact_phone)} onChange={set("contact_phone")} /></label>
       <label className="block text-sm">WhatsApp<input className={f} value={String(form.contact_whatsapp)} onChange={set("contact_whatsapp")} /></label>
       <label className="block text-sm">Stall address<input className={f} value={String(form.stall_address)} onChange={set("stall_address")} /></label>
       <label className="block text-sm">Instagram<input className={f} value={String(form.instagram)} onChange={set("instagram")} /></label>
-      <button className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">Save settings</button>
+      <Button className="rounded-full">Save settings</Button>
     </form>
   );
 }

@@ -58,6 +58,10 @@ export function AddressEditor({ userId, initial, name, onSaved, onCancel }: { us
     <p className="text-xs text-muted-foreground">Location lookup shares your coordinates with OpenStreetMap only when you choose it.</p>
     {locationMessage && <p role="status" className="text-sm">{locationMessage}</p>}
     <div className="grid gap-3 sm:grid-cols-2">{fields.map(f => <label className="block text-sm" key={f.key}>{f.label}<input className="mt-1 w-full rounded-md border bg-card px-3 py-2" value={form[f.key]} maxLength={f.max} required={f.key !== "landmark"} inputMode={f.key === "pin" || f.key === "phone" ? "numeric" : "text"} onChange={e => { setForm({ ...form, [f.key]: e.target.value }); setConfirmed(false); }} /></label>)}</div>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label className="block text-sm">Address latitude<input type="number" step="any" min={-90} max={90} className="mt-1 w-full rounded-md border bg-card px-3 py-2" value={form.latitude ?? ""} onChange={e => { setForm({ ...form, latitude: e.target.value === "" ? null : Number(e.target.value) }); setConfirmed(false); }} /></label>
+      <label className="block text-sm">Address longitude<input type="number" step="any" min={-180} max={180} className="mt-1 w-full rounded-md border bg-card px-3 py-2" value={form.longitude ?? ""} onChange={e => { setForm({ ...form, longitude: e.target.value === "" ? null : Number(e.target.value) }); setConfirmed(false); }} /></label>
+    </div>
     <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} required />I confirm this delivery address is correct.</label>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     <div className="flex gap-2"><Button disabled={busy || locating}><Save />{busy ? "Saving…" : "Save address"}</Button><Button type="button" variant="ghost" onClick={onCancel} disabled={busy}>Cancel</Button></div>

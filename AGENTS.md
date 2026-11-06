@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 - Orders are created only through the `place_order` security-definer SQL function, which recomputes all prices from the products/settings tables; never insert orders from the client or trust browser totals.
+- Delivery pricing is derived in SQL from configured shop coordinates and an owned saved address; the client-safe delivery module mirrors the distance/tier rules for previews only, and orders snapshot the computed distance. The legacy order signature cannot bypass saved-address validation.
 - Admin access is checked via `public.user_roles` + `has_role()`; the first account to sign up is auto-granted admin by a trigger on auth.users.
 - Customer checkout calls `place_customer_order`, which delegates price calculation and order insertion to `place_order`; authenticated ownership and immutable address snapshots are derived in SQL, not from browser identity or totals.
 - Customer query keys include user IDs and reads explicitly filter ownership; RLS remains authoritative and sign-out clears query caches to prevent cross-account data reuse.
