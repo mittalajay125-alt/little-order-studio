@@ -1,8 +1,8 @@
 # Phase 2 delivery charges
 - [x] Inspect checkout, saved-address coordinates, settings, and order calculation structure.
-- [ ] Obtain exact shop delivery location; blocked because shop coordinates and stall address are not configured.
-- [ ] Implement configurable shop coordinates, straight-line delivery pricing, checkout distance display and range blocking, and saved order distance.
-- [ ] Test delivery boundaries, pickup exemption, address changes, and authoritative order totals; do not publish automatically.
+- [x] Obtain and configure the owner's exact shop delivery coordinates.
+- [x] Implement configurable shop coordinates, straight-line delivery pricing, checkout distance display and range blocking, and saved order distance.
+- [x] Verify all price boundaries in JavaScript and SQL; 36 automated tests pass. Signed-in checkout saved 5.56 km, ₹40 delivery, and ₹220 total on a ₹180 cart; account readback and database confirmed. Changed-address range blocking and pickup fee exemption passed; owner settings and existing orders loaded. Temporary test order/address removed. Not published automatically.
 
 # Customer account upgrade
 - [x] Replace customer OTP with originating-browser email approval (PKCE, default sender); 30 tests pass.
